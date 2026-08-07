@@ -23,7 +23,11 @@ class DoctorRepository:
 
     def get_all(self) -> list[Doctor]:
 
-        return self.db.query(Doctor).all()
+        return (
+            self.db.query(Doctor)
+            .order_by(Doctor.full_name)
+            .all()
+        )
 
     def get_by_id(
         self,
@@ -44,6 +48,7 @@ class DoctorRepository:
         return (
             self.db.query(Doctor)
             .filter(Doctor.hospital_id == hospital_id)
+            .order_by(Doctor.full_name)
             .all()
         )
 
@@ -54,7 +59,19 @@ class DoctorRepository:
 
         return (
             self.db.query(Doctor)
-            .filter(Doctor.specialization == specialization)
+            .filter(
+                Doctor.specialization.ilike(specialization)
+            )
+            .order_by(Doctor.full_name)
+            .all()
+        )
+
+    def get_available(self) -> list[Doctor]:
+
+        return (
+            self.db.query(Doctor)
+            .filter(Doctor.is_available == True)
+            .order_by(Doctor.full_name)
             .all()
         )
 

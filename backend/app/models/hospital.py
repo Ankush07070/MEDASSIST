@@ -20,6 +20,7 @@ class Hospital(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(
         String(200),
         nullable=False,
+        index=True,
     )
 
     address: Mapped[str] = mapped_column(
@@ -30,13 +31,15 @@ class Hospital(TimestampMixin, Base):
     city: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
+        index=True,
     )
 
     state: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
+        index=True,
     )
-
+    
     phone: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

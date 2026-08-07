@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -23,9 +25,15 @@ def create_hospital(
     hospital: HospitalCreate,
     db: Session = Depends(get_db),
 ):
+
     service = HospitalService(db)
 
-    return service.create_hospital(hospital)
+    return service.create_hospital(
+        hospital
+    )
+
+
+
 
 
 @router.get(
@@ -33,11 +41,28 @@ def create_hospital(
     response_model=list[HospitalResponse],
 )
 def get_hospitals(
+    city: Optional[str] = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
+
     service = HospitalService(db)
 
+    if search:
+        return service.search_hospitals(
+            search
+        )
+
+    if city:
+        return service.get_hospitals_by_city(
+            city
+        )
+
     return service.get_all_hospitals()
+
+
+
+# GET HOSPITAL BY ID
 
 
 @router.get(
@@ -48,12 +73,17 @@ def get_hospital(
     hospital_id: str,
     db: Session = Depends(get_db),
 ):
+
     service = HospitalService(db)
 
     try:
-        return service.get_hospital(hospital_id)
+
+        return service.get_hospital(
+            hospital_id
+        )
 
     except ValueError as e:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),

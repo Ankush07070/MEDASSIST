@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.models.hospital import Hospital
@@ -23,16 +25,50 @@ class HospitalRepository:
 
         return (
             self.db.query(Hospital)
+            .order_by(Hospital.name)
             .all()
         )
 
+
     def get_by_id(
         self,
-        hospital_id,
+        hospital_id: UUID,
     ):
 
         return (
             self.db.query(Hospital)
-            .filter(Hospital.id == hospital_id)
+            .filter(
+                Hospital.id == hospital_id
+            )
             .first()
+        )
+
+
+    def get_by_city(
+        self,
+        city: str,
+    ):
+
+        return (
+            self.db.query(Hospital)
+            .filter(
+                Hospital.city.ilike(city)
+            )
+            .order_by(Hospital.name)
+            .all()
+        )
+
+
+    def search(
+        self,
+        keyword: str,
+    ):
+
+        return (
+            self.db.query(Hospital)
+            .filter(
+                Hospital.name.ilike(f"%{keyword}%")
+            )
+            .order_by(Hospital.name)
+            .all()
         )

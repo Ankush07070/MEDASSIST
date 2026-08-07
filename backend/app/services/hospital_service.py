@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.models.hospital import Hospital
@@ -9,6 +11,7 @@ class HospitalService:
 
     def __init__(self, db: Session):
         self.repository = HospitalRepository(db)
+
 
     def create_hospital(
         self,
@@ -24,20 +27,49 @@ class HospitalService:
             email=hospital_data.email,
         )
 
-        return self.repository.create(hospital)
+        return self.repository.create(
+            hospital
+        )
+
+  
 
     def get_all_hospitals(self):
 
         return self.repository.get_all()
 
+   
+
     def get_hospital(
         self,
-        hospital_id,
+        hospital_id: UUID,
     ):
 
-        hospital = self.repository.get_by_id(hospital_id)
+        hospital = self.repository.get_by_id(
+            hospital_id
+        )
 
         if not hospital:
-            raise ValueError("Hospital not found")
+            raise ValueError(
+                "Hospital not found."
+            )
 
         return hospital
+
+ 
+    def search_hospitals(
+        self,
+        keyword: str,
+    ):
+
+        return self.repository.search(
+            keyword
+        )
+
+    def get_hospitals_by_city(
+        self,
+        city: str,
+    ):
+
+        return self.repository.get_by_city(
+            city
+        )

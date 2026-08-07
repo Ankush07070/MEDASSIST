@@ -1,18 +1,101 @@
+# ==========================================================
+# MEDASSIST
+# ==========================================================
+
 # Environment
 backend/.env
 backend/.env.*
+frontend/.env
+frontend/.env.*
 
 # Python
 **/__pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual Environments
+backend/venv/
+venv/
+.venv/
+env/
+
+# Python Cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Uploads
 backend/uploads/
 
-# Virtual environments
-backend/venv/
-venv/
+# AI Storage
+backend/chroma_db/
+backend/vectorstore/
+backend/temp/
+backend/cache/
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# Databases
+*.db
+*.sqlite3
+
+# Node Modules
+frontend/node_modules/
+node_modules/
+
+# Frontend Build
+frontend/dist/
+dist/
+
+# Vite
+frontend/.vite/
+.vite/
+
+# Package Manager Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # IDE
 .vscode/
 .idea/
+*.iml
+
+# Operating System
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Coverage
+.coverage
+htmlcov/
+coverage/
+
+# Build
+build/
+out/
+release/
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*.bak
+*.orig
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Cache
+.cache/

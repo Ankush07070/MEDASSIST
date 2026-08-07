@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -15,21 +16,32 @@ class AppointmentService:
         self.db = db
         self.repository = AppointmentRepository(db)
 
+   
     def book_appointment(
         self,
         appointment_data: AppointmentCreate,
         current_user: User,
     ) -> Appointment:
 
-        # Check if doctor exists
+        # Check appointment is not in the past
+        if appointment_data.appointment_time < datetime.now(timezone.utc):
+            raise ValueError(
+                "Appointment time cannot be in the past."
+            )
+
+        # Check doctor exists
         doctor = (
             self.db.query(Doctor)
-            .filter(Doctor.id == appointment_data.doctor_id)
+            .filter(
+                Doctor.id == appointment_data.doctor_id
+            )
             .first()
         )
 
         if not doctor:
-            raise ValueError("Doctor not found")
+            raise ValueError(
+                "Doctor not found."
+            )
 
         # Check doctor's availability
         existing = self.repository.get_doctor_appointment(
@@ -42,6 +54,19 @@ class AppointmentService:
                 "Doctor is already booked at this time."
             )
 
+        # Check patient's availability
+        patient_existing = (
+            self.repository.get_patient_appointment(
+                current_user.id,
+                appointment_data.appointment_time,
+            )
+        )
+
+        if patient_existing:
+            raise ValueError(
+                "You already have an appointment at this time."
+            )
+
         appointment = Appointment(
             patient_id=current_user.id,
             doctor_id=appointment_data.doctor_id,
@@ -49,16 +74,21 @@ class AppointmentService:
             reason=appointment_data.reason,
         )
 
-        return self.repository.create(appointment)
+        return self.repository.create(
+            appointment
+        )
 
+    
     def get_my_appointments(
         self,
         current_user: User,
     ):
+
         return self.repository.get_by_patient(
             current_user.id
         )
 
+ 
     def cancel_appointment(
         self,
         appointment_id: UUID,
@@ -71,12 +101,12 @@ class AppointmentService:
 
         if not appointment:
             raise ValueError(
-                "Appointment not found"
+                "Appointment not found."
             )
 
         if appointment.patient_id != current_user.id:
             raise ValueError(
-                "You cannot cancel this appointment"
+                "You cannot cancel this appointment."
             )
 
         return self.repository.cancel(

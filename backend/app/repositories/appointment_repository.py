@@ -11,6 +11,8 @@ class AppointmentRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    
+
     def create(
         self,
         appointment: Appointment,
@@ -22,6 +24,7 @@ class AppointmentRepository:
 
         return appointment
 
+    
     def get_by_id(
         self,
         appointment_id: UUID,
@@ -29,9 +32,13 @@ class AppointmentRepository:
 
         return (
             self.db.query(Appointment)
-            .filter(Appointment.id == appointment_id)
+            .filter(
+                Appointment.id == appointment_id
+            )
             .first()
         )
+
+   
 
     def get_by_patient(
         self,
@@ -40,10 +47,17 @@ class AppointmentRepository:
 
         return (
             self.db.query(Appointment)
-            .filter(Appointment.patient_id == patient_id)
+            .filter(
+                Appointment.patient_id == patient_id
+            )
+            .order_by(
+                Appointment.appointment_time.desc()
+            )
             .all()
         )
 
+   
+    
     def get_by_doctor(
         self,
         doctor_id: UUID,
@@ -51,9 +65,16 @@ class AppointmentRepository:
 
         return (
             self.db.query(Appointment)
-            .filter(Appointment.doctor_id == doctor_id)
+            .filter(
+                Appointment.doctor_id == doctor_id
+            )
+            .order_by(
+                Appointment.appointment_time.desc()
+            )
             .all()
         )
+
+   
 
     def get_doctor_appointment(
         self,
@@ -70,6 +91,26 @@ class AppointmentRepository:
             )
             .first()
         )
+
+    
+
+    def get_patient_appointment(
+        self,
+        patient_id: UUID,
+        appointment_time: datetime,
+    ) -> Appointment | None:
+
+        return (
+            self.db.query(Appointment)
+            .filter(
+                Appointment.patient_id == patient_id,
+                Appointment.appointment_time == appointment_time,
+                Appointment.status == "booked",
+            )
+            .first()
+        )
+
+    
 
     def cancel(
         self,

@@ -30,13 +30,12 @@ def upload_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-
     service = ReportService(db)
 
     try:
         report = service.upload_report(
-            file,
-            current_user,
+            file=file,
+            current_user=current_user,
         )
 
         background_tasks.add_task(
@@ -61,9 +60,6 @@ def my_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-
     service = ReportService(db)
 
-    return service.my_reports(
-        current_user,
-    )
+    return service.my_reports(current_user)

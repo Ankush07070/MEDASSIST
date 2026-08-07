@@ -65,4 +65,8 @@ class User(TimestampMixin, Base):
     reports: Mapped[list["Report"]] = relationship(
     back_populates="patient",
     cascade="all, delete-orphan",
-)
+    )
+    chats: Mapped[list["Chat"]] = relationship(
+    back_populates="patient",
+    cascade="all, delete-orphan",
+    )
