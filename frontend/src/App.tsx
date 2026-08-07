@@ -2,8 +2,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+
 import Dashboard from "./pages/dashboard/Dashboard";
 import Reports from "./pages/reports/Reports";
+import Doctors from "./pages/doctors/Doctors";
+import Appointments from "./pages/appointments/Appointments";
+import BookAppointment from "./pages/appointments/BookAppointment";
+import Hospitals from "./pages/hospitals/Hospitals";
+import AIAssistantPage from "./pages/ai/AIAssistantPage";
 
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -16,7 +22,9 @@ function App() {
 
             <Routes>
 
-                {/* Public Routes */}
+                {/* ========================= */}
+                {/* PUBLIC ROUTES              */}
+                {/* ========================= */}
 
                 <Route
                     path="/"
@@ -33,7 +41,9 @@ function App() {
                     element={<Register />}
                 />
 
-                {/* Protected Routes */}
+                {/* ========================= */}
+                {/* PROTECTED ROUTES           */}
+                {/* ========================= */}
 
                 <Route
                     element={
@@ -53,25 +63,40 @@ function App() {
                         element={<Reports />}
                     />
 
+                    <Route
+                        path="/chat"
+                        element={<AIAssistantPage />}
+                    />
+
+                    <Route
+                        path="/appointments"
+                        element={<Appointments />}
+                    />
+
+                    <Route
+                        path="/appointments/book"
+                        element={<BookAppointment />}
+                    />
+
+                    <Route
+                        path="/doctors"
+                        element={<Doctors />}
+                    />
+
+                    <Route
+                        path="/hospitals"
+                        element={<Hospitals />}
+                    />
+
                 </Route>
 
-                {/* 404 Page */}
+                {/* ========================= */}
+                {/* FALLBACK                   */}
+                {/* ========================= */}
 
                 <Route
                     path="*"
-                    element={
-                        <div className="min-h-screen flex items-center justify-center bg-slate-100">
-                            <div className="text-center">
-                                <h1 className="text-6xl font-bold text-blue-600">
-                                    404
-                                </h1>
-
-                                <p className="text-slate-600 mt-4 text-lg">
-                                    Page Not Found
-                                </p>
-                            </div>
-                        </div>
-                    }
+                    element={<Login />}
                 />
 
             </Routes>
@@ -82,4 +107,4 @@ function App() {
 
 }
 
-export default App;
+export default App; 

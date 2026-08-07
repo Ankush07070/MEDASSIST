@@ -11,7 +11,7 @@ import { getReports } from "../../api/reports";
 import { getDoctors } from "../../api/doctors";
 import { getAppointments } from "../../api/appointments";
 
-import HealthChart from "../../components/HealthChart";
+
 import StatCard from "../../components/StatCard";
 import RecentReports from "../../components/RecentReports";
 import UpcomingAppointment from "../../components/UpcomingAppointment";
@@ -74,9 +74,7 @@ function Dashboard() {
 
             </div>
 
-            {/* Health Analytics */}
-
-            <HealthChart />
+           
 
             {/* Statistics */}
 
