@@ -31,7 +31,7 @@ class Appointment(TimestampMixin, Base):
     )
 
     appointment_time: Mapped[datetime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=False,
     )
 
@@ -47,9 +47,11 @@ class Appointment(TimestampMixin, Base):
     )
 
     patient: Mapped["User"] = relationship(
-    back_populates="appointments"
+        "User",
+        back_populates="appointments",
     )
 
     doctor: Mapped["Doctor"] = relationship(
-    back_populates="appointments"
-    )
+        "Doctor",
+        back_populates="appointments",
+    )   

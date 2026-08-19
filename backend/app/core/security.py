@@ -14,9 +14,7 @@ pwd_context = CryptContext(
 
 
 def hash_password(password: str) -> str:
-    """
-    Hash a plain-text password.
-    """
+   
     return pwd_context.hash(password)
 
 
@@ -37,9 +35,9 @@ def create_access_token(
     subject: str,
     expires_delta: timedelta | None = None,
 ) -> str:
-    """
-    Generate a JWT access token.
-    """
+    
+    #Generate  jwt access token.
+    
 
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta

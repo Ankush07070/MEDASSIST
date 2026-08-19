@@ -3,8 +3,11 @@ from datetime import datetime
 
 from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.appointment import Appointment
 
 from app.database.base import Base
 from app.database.mixins import TimestampMixin
@@ -58,15 +61,47 @@ class User(TimestampMixin, Base):
         DateTime,
         nullable=True,
     )
+
+    # ==================================================
+    # PATIENT RELATIONSHIPS
+    # ==================================================
+
     appointments: Mapped[list["Appointment"]] = relationship(
-    back_populates="patient",
-    cascade="all, delete-orphan",
+        "Appointment",
+        back_populates="patient",
+        cascade="all, delete-orphan",
     )
+
     reports: Mapped[list["Report"]] = relationship(
-    back_populates="patient",
-    cascade="all, delete-orphan",
+        "Report",
+        back_populates="patient",
+        cascade="all, delete-orphan",
     )
+
     chats: Mapped[list["Chat"]] = relationship(
-    back_populates="patient",
-    cascade="all, delete-orphan",
+        "Chat",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+    )
+
+    # ==================================================
+    # DOCTOR PROFILE
+    # ==================================================
+
+    doctor_profile: Mapped["Doctor | None"] = relationship(
+        "Doctor",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    # ==================================================
+    # HOSPITAL PROFILE
+    # ==================================================
+
+    hospital_profile: Mapped["Hospital | None"] = relationship(
+        "Hospital",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
     )

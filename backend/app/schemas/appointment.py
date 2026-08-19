@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.hospital import HospitalResponse
+
 
 class AppointmentCreate(BaseModel):
     doctor_id: UUID
@@ -24,17 +26,25 @@ class DoctorAppointmentInfo(BaseModel):
     consultation_fee: float
     is_available: bool
     hospital_id: UUID
+    hospital: HospitalResponse
 
     model_config = ConfigDict(
         from_attributes=True
     )
 
+class PatientAppointmentInfo(BaseModel):
+    id: UUID
+    full_name:str
+    email:str
+
+    model_config = ConfigDict(from_attributes=True)
 
 class AppointmentResponse(BaseModel):
     id: UUID
     patient_id: UUID
     doctor_id: UUID
 
+    patient: PatientAppointmentInfo
     doctor: DoctorAppointmentInfo
 
     appointment_time: datetime

@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.appointment import Appointment
+from app.models.doctor import Doctor
 
 
 class AppointmentRepository:
@@ -32,7 +33,8 @@ class AppointmentRepository:
         return (
             self.db.query(Appointment)
             .options(
-                joinedload(Appointment.doctor)
+                joinedload(Appointment.doctor).joinedload(Doctor.hospital),
+                joinedload(Appointment.patient)
             )
             .filter(
                 Appointment.id == appointment_id
@@ -48,7 +50,8 @@ class AppointmentRepository:
         return (
             self.db.query(Appointment)
             .options(
-                joinedload(Appointment.doctor)
+                joinedload(Appointment.doctor).joinedload(Doctor.hospital),
+                joinedload(Appointment.patient)
             )
             .filter(
                 Appointment.patient_id == patient_id
@@ -67,7 +70,8 @@ class AppointmentRepository:
         return (
             self.db.query(Appointment)
             .options(
-                joinedload(Appointment.doctor)
+                joinedload(Appointment.doctor).joinedload(Doctor.hospital),
+                joinedload(Appointment.patient),
             )
             .filter(
                 Appointment.doctor_id == doctor_id
@@ -89,7 +93,7 @@ class AppointmentRepository:
             .filter(
                 Appointment.doctor_id == doctor_id,
                 Appointment.appointment_time == appointment_time,
-                Appointment.status == "booked",
+                Appointment.status.in_(["booked", "confirmed"]),
             )
             .first()
         )
@@ -105,7 +109,7 @@ class AppointmentRepository:
             .filter(
                 Appointment.patient_id == patient_id,
                 Appointment.appointment_time == appointment_time,
-                Appointment.status == "booked",
+                Appointment.status.in_(["booked", "confirmed"]),
             )
             .first()
         )
@@ -119,6 +123,19 @@ class AppointmentRepository:
 
         self.db.commit()
 
+        self.db.refresh(appointment)
+
+        return appointment
+
+    def update_status(
+        self,
+        appointment: Appointment,
+        status: str,
+    ) -> Appointment:
+
+        appointment.status = status
+
+        self.db.commit()
         self.db.refresh(appointment)
 
         return appointment

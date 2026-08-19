@@ -4,6 +4,7 @@ from app.core.security import (
     hash_password,
     verify_password,
     create_access_token,
+    
 )
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -11,6 +12,7 @@ from app.schemas.user import (
     UserCreate,
     UserLogin,
     Token,
+    DoctorUserCreate,
 )
 
 
@@ -77,3 +79,30 @@ class AuthService:
         return Token(
             access_token=access_token,
         )
+
+    def create_doctor_user(
+            self,
+            user_data: DoctorUserCreate,
+        ) -> User:
+
+        existing_user = self.user_repository.get_by_email(
+            user_data.email
+        )
+
+        if existing_user:
+            raise ValueError(
+                "Email already registered"
+            )
+
+        hashed_password = hash_password(
+            user_data.password
+        )
+
+        user = User(
+            full_name=user_data.full_name,
+            email=user_data.email,
+            hashed_password=hashed_password,
+            role="doctor",
+        )
+
+        return self.user_repository.create(user)

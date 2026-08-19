@@ -1,3 +1,5 @@
+from typing import Callable
+
 from jose import JWTError, jwt
 
 from fastapi import Depends, HTTPException, status
@@ -8,6 +10,7 @@ from app.core.config import settings
 from app.database.session import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login"
@@ -47,3 +50,29 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+# =========================================================
+# ROLE-BASED ACCESS CONTROL
+# =========================================================
+
+def require_role(*allowed_roles: str) -> Callable:
+
+    def role_checker(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this resource.",
+            )
+
+        return current_user
+
+    return role_checker
+
+
+require_patient = require_role("patient")
+require_doctor = require_role("doctor")
+require_hospital = require_role("hospital")

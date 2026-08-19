@@ -36,23 +36,11 @@ def upgrade() -> None:
         nullable=True,
     )
 
-    # Store Cloudinary public_id
-    op.add_column(
-        "reports",
-        sa.Column(
-            "cloudinary_public_id",
-            sa.String(length=500),
-            nullable=True,
-        ),
-    )
 
 
 def downgrade() -> None:
 
-    op.drop_column(
-        "reports",
-        "cloudinary_public_id",
-    )
+   
 
     op.alter_column(
         "reports",

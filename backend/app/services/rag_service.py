@@ -1,6 +1,5 @@
 import time
 from pathlib import Path
-from typing import Any
 
 from google import genai
 
@@ -23,12 +22,16 @@ class RAGService:
 
         self.chunker = ChunkingService()
 
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = (
+            EmbeddingService()
+        )
 
-        self.vector_repository = VectorRepository()
+        self.vector_repository = (
+            VectorRepository()
+        )
 
         self.client = genai.Client(
-            api_key=settings.GEMINI_API_KEY,
+            api_key=settings.GEMINI_API_KEY
         )
 
         with open(
@@ -39,7 +42,9 @@ class RAGService:
 
             self.prompt_template = f.read()
 
-   
+    # ==================================================
+    # INDEX REPORT
+    # ==================================================
 
     def index_report(
         self,
@@ -48,13 +53,46 @@ class RAGService:
         text: str,
     ) -> None:
 
+        if not text or not text.strip():
+
+            print(
+                f"Skipping report {report_id}: "
+                "no text available."
+            )
+
+            return
+
         print("=" * 60)
         print("INDEXING REPORT")
+        print(f"Report ID: {report_id}")
         print("=" * 60)
+
+        # Remove existing vectors first.
+        # Prevents duplicate chunks when re-indexing.
+        try:
+
+            self.vector_repository.delete_report(
+                report_id
+            )
+
+        except Exception as e:
+
+            print(
+                "Warning: could not remove "
+                f"old vectors: {e}"
+            )
 
         chunks = self.chunker.chunk_text(text)
 
-        print(f"Total chunks: {len(chunks)}")
+        if not chunks:
+
+            print("No chunks generated.")
+
+            return
+
+        print(
+            f"Total chunks generated: {len(chunks)}"
+        )
 
         ids = []
         embeddings = []
@@ -63,13 +101,29 @@ class RAGService:
 
         for index, chunk in enumerate(chunks):
 
+            if not chunk or not chunk.strip():
+                continue
+
             print(
-                f"Generating embedding {index + 1}/{len(chunks)}"
+                f"Embedding chunk "
+                f"{index + 1}/{len(chunks)}"
             )
 
-            embedding = self.embedding_service.generate_embedding(
-                chunk
-            )
+            try:
+
+                embedding = (
+                    self.embedding_service
+                    .generate_embedding(chunk)
+                )
+
+            except Exception as e:
+
+                print(
+                    f"Embedding failed for "
+                    f"chunk {index}: {e}"
+                )
+
+                continue
 
             ids.append(
                 f"{report_id}_{index}"
@@ -91,7 +145,17 @@ class RAGService:
                 }
             )
 
-        print("Saving vectors to ChromaDB...")
+        if not ids:
+
+            print(
+                "No chunks were successfully embedded."
+            )
+
+            return
+
+        print(
+            f"Saving {len(ids)} vectors..."
+        )
 
         self.vector_repository.add_chunks(
             ids=ids,
@@ -100,22 +164,57 @@ class RAGService:
             metadatas=metadatas,
         )
 
-        print("Vectors stored successfully.")
+        print(
+            "Report indexed successfully."
+        )
+
         print("=" * 60)
 
+    # ==================================================
+    # RETRIEVE RELEVANT CHUNKS
+    # ==================================================
+
   
-    
     def retrieve_chunks(
         self,
         patient_id: str,
         question: str,
         report_id: str | None = None,
         n_results: int = 5,
-    ) -> dict[str, Any]:
+    ) -> dict:
 
-        embedding = self.embedding_service.generate_embedding(
-            question
+        question = question.strip()
+
+        if not question:
+
+            return {
+                "documents": [[]],
+                "metadatas": [[]],
+                "distances": [[]],
+            }
+
+        # Keep retrieval focused.
+        n_results = max(
+            1,
+            min(n_results, 10),
         )
+
+        # Generate embedding for the patient's question.
+        embedding = (
+            self.embedding_service
+            .generate_embedding(question)
+        )
+
+        # VectorRepository handles:
+        #
+        # 1. Patient-level isolation
+        # 2. Optional report-level filtering
+        #
+        # report_id=None
+        #   → search across patient's reports
+        #
+        # report_id=<id>
+        #   → search only that report
 
         return self.vector_repository.search(
             embedding=embedding,
@@ -123,35 +222,64 @@ class RAGService:
             report_id=report_id,
             n_results=n_results,
         )
+        
 
-   
+    # ==================================================
+    # BUILD CONTEXT
+    # ==================================================
+
     def build_context(
         self,
-        search_results: dict[str, Any],
-    ) -> tuple[str, list]:
+        search_results: dict,
+    ) -> str:
 
-        documents = search_results["documents"][0]
-
-        metadatas = search_results["metadatas"][0]
-
-        context = "\n\n".join(
-            documents
+        documents_data = (
+            search_results.get("documents")
+            or []
         )
 
-        sources = []
+        if not documents_data:
+            return ""
 
-        for metadata in metadatas:
+        documents = (
+            documents_data[0]
+            if documents_data[0]
+            else []
+        )
 
-            sources.append(
-                {
-                    "report_id": metadata["report_id"],
-                    "chunk_index": metadata["chunk_index"],
-                }
+        if not documents:
+            return ""
+
+        context_parts = []
+        seen_chunks = set()
+
+        for document in documents:
+
+            if not document or not document.strip():
+                continue
+
+            normalized = " ".join(
+                document.split()
+            ).strip().lower()
+
+            if not normalized:
+                continue
+
+            if normalized in seen_chunks:
+                continue
+
+            seen_chunks.add(normalized)
+
+            context_parts.append(
+                document.strip()
             )
 
-        return context, sources
-
-    
+        return "\n\n".join(
+            context_parts
+        )
+    # ==================================================
+    # ANSWER QUESTION
+    # ==================================================
 
     def answer_question(
         self,
@@ -160,44 +288,130 @@ class RAGService:
         report_id: str | None = None,
     ) -> dict:
 
-        search_results = self.retrieve_chunks(
-            patient_id=patient_id,
-            question=question,
-            report_id=report_id,
-        )
+        question = question.strip()
 
-        context, sources = self.build_context(
+        if not question:
+
+            return {
+                "answer": (
+                    "Please enter a question "
+                    "about your medical reports."
+                )
+            }
+
+        # ----------------------------------------------
+        # Retrieve relevant report chunks
+        # ----------------------------------------------
+
+        try:
+
+            search_results = (
+                self.retrieve_chunks(
+                    patient_id=patient_id,
+                    question=question,
+                    report_id=report_id,
+                    n_results=5,
+                )
+            )
+
+        except Exception as e:
+
+            print(
+                f"Retrieval failed: {e}"
+            )
+
+            return {
+                "answer": (
+                    "I could not retrieve information "
+                    "from your uploaded reports."
+                )
+            }
+
+        # ----------------------------------------------
+        # Build context
+        # ----------------------------------------------
+
+        context = self.build_context(
             search_results
         )
 
+        # ----------------------------------------------
+        # No relevant information
+        # ----------------------------------------------
+
+        if not context.strip():
+
+            return {
+                "answer": (
+                    "I could not find that information "
+                    "in your uploaded reports."
+                )
+            }
+
+        # ----------------------------------------------
+        # Build RAG prompt
+        # ----------------------------------------------
+
         prompt = (
             self.prompt_template
-            .replace("{context}", context)
-            .replace("{question}", question)
+            .replace(
+                "{context}",
+                context,
+            )
+            .replace(
+                "{question}",
+                question,
+            )
         )
+
+        # ----------------------------------------------
+        # Generate answer
+        # ----------------------------------------------
 
         for attempt in range(3):
 
             try:
 
-                response = self.client.models.generate_content(
-                    model=settings.GEMINI_MODEL,
-                    contents=prompt,
+                response = (
+                    self.client.models
+                    .generate_content(
+                        model=settings.GEMINI_MODEL,
+                        contents=prompt,
+                    )
+                )
+
+                answer = (
+                    response.text.strip()
+                    if response.text
+                    else (
+                        "I could not generate "
+                        "an answer from your "
+                        "uploaded reports."
+                    )
                 )
 
                 return {
-                    "answer": response.text,
-                    "sources": sources,
+                    "answer": answer
                 }
 
             except Exception as e:
 
-                print(f"Attempt {attempt + 1} failed: {e}")
+                print(
+                    f"Gemini attempt "
+                    f"{attempt + 1} failed: {e}"
+                )
 
-                if attempt == 2:
-                    return {
-                        "answer": f"AI is temporarily unavailable.\n\n{e}",
-                        "sources": sources,
-                    }
+                if attempt < 2:
 
-                time.sleep(3)
+                    time.sleep(2)
+
+        # ----------------------------------------------
+        # Final fallback
+        # ----------------------------------------------
+
+        return {
+            "answer": (
+                "AI is temporarily unavailable. "
+                "Please try again later."
+            )
+        }

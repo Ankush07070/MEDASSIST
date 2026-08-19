@@ -4,18 +4,25 @@ import chromadb
 
 
 class VectorRepository:
-    
-    #Handles all interactions with ChromaDB.
-    
+    """
+    Handles all interactions with ChromaDB.
+    """
 
     def __init__(self):
+
         self.client = chromadb.PersistentClient(
             path="chroma_db"
         )
 
-        self.collection = self.client.get_or_create_collection(
-            name="medical_reports"
+        self.collection = (
+            self.client.get_or_create_collection(
+                name="medical_reports"
+            )
         )
+
+    # ==================================================
+    # ADD CHUNKS
+    # ==================================================
 
     def add_chunks(
         self,
@@ -24,9 +31,9 @@ class VectorRepository:
         documents: List[str],
         metadatas: List[Dict[str, Any]],
     ) -> None:
-    
-        #Store report chunks in ChromaDB.
-        
+
+        if not ids:
+            return
 
         self.collection.add(
             ids=ids,
@@ -35,6 +42,10 @@ class VectorRepository:
             metadatas=metadatas,
         )
 
+    # ==================================================
+    # SEARCH
+    # ==================================================
+
     def search(
         self,
         embedding: List[float],
@@ -42,6 +53,14 @@ class VectorRepository:
         report_id: str | None = None,
         n_results: int = 5,
     ) -> Dict[str, Any]:
+
+        if self.collection.count() == 0:
+
+            return {
+                "documents": [[]],
+                "metadatas": [[]],
+                "distances": [[]],
+            }
 
         if report_id:
 
@@ -64,23 +83,31 @@ class VectorRepository:
 
         return self.collection.query(
             query_embeddings=[embedding],
-            n_results=n_results,
+            n_results=min(
+                n_results,
+                self.collection.count(),
+            ),
             where=where,
         )
+
+    # ==================================================
+    # DELETE REPORT
+    # ==================================================
 
     def delete_report(
         self,
         report_id: str,
     ) -> None:
-        
-        #Delete all vectors belonging to one report.
-        
 
         self.collection.delete(
             where={
                 "report_id": report_id
             }
         )
+
+    # ==================================================
+    # UPDATE CHUNK
+    # ==================================================
 
     def update_chunk(
         self,
@@ -89,9 +116,6 @@ class VectorRepository:
         document: str,
         metadata: Dict[str, Any],
     ) -> None:
-    
-        #Update a single chunk.
-        
 
         self.collection.update(
             ids=[chunk_id],
@@ -100,25 +124,27 @@ class VectorRepository:
             metadatas=[metadata],
         )
 
+    # ==================================================
+    # GET CHUNK
+    # ==================================================
+
     def get_chunk(
         self,
         chunk_id: str,
     ) -> Dict[str, Any]:
-        
-        #Fetch chunk by ID.
-        
 
         return self.collection.get(
             ids=[chunk_id]
         )
 
+    # ==================================================
+    # GET PATIENT CHUNKS
+    # ==================================================
+
     def get_patient_chunks(
         self,
         patient_id: str,
     ) -> Dict[str, Any]:
-        
-        #Retrieve every chunk belonging to a patient.
-        
 
         return self.collection.get(
             where={
@@ -126,13 +152,14 @@ class VectorRepository:
             }
         )
 
+    # ==================================================
+    # CHECK REPORT EXISTS
+    # ==================================================
+
     def report_exists(
         self,
         report_id: str,
     ) -> bool:
-        
-        #Check whether vectors exist for a report.
-        
 
         result = self.collection.get(
             where={
@@ -140,11 +167,14 @@ class VectorRepository:
             }
         )
 
-        return len(result["ids"]) > 0
+        return len(
+            result.get("ids", [])
+        ) > 0
+
+    # ==================================================
+    # COUNT
+    # ==================================================
 
     def count(self) -> int:
-        
-        #Return total number of vectors.
-    
 
         return self.collection.count()

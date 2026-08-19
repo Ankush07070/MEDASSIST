@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     appointment,
     reports,
     chat,
+    admin,
 )
 
 app = FastAPI(
@@ -71,5 +72,9 @@ app.include_router(
 
 app.include_router(
     chat.router,
+    prefix="/api/v1",
+)
+app.include_router(
+    admin.router,
     prefix="/api/v1",
 )

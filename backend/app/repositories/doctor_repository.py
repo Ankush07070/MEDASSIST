@@ -40,6 +40,17 @@ class DoctorRepository:
             .first()
         )
 
+    def get_by_user_id(
+        self,
+        user_id: UUID,
+    ) -> Doctor | None:
+
+        return (
+            self.db.query(Doctor)
+            .filter(Doctor.user_id == user_id)
+            .first()
+        )
+
     def get_by_hospital(
         self,
         hospital_id: UUID,
@@ -60,7 +71,9 @@ class DoctorRepository:
         return (
             self.db.query(Doctor)
             .filter(
-                Doctor.specialization.ilike(specialization)
+                Doctor.specialization.ilike(
+                    specialization
+                )
             )
             .order_by(Doctor.full_name)
             .all()
@@ -70,10 +83,27 @@ class DoctorRepository:
 
         return (
             self.db.query(Doctor)
-            .filter(Doctor.is_available == True)
+            .filter(
+                Doctor.is_available == True
+            )
             .order_by(Doctor.full_name)
             .all()
         )
+
+    def update(
+        self,
+        doctor: Doctor,
+        data: dict,
+    ) -> Doctor:
+
+        for key, value in data.items():
+            if value is not None:
+                setattr(doctor, key, value)
+
+        self.db.commit()
+        self.db.refresh(doctor)
+
+        return doctor
 
     def delete(
         self,

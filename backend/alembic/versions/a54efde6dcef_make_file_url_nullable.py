@@ -27,24 +27,8 @@ def upgrade() -> None:
         nullable=True,
     )
 
-    # Add Cloudinary public id
-    op.add_column(
-        "reports",
-        sa.Column(
-            "cloudinary_public_id",
-            sa.String(length=500),
-            nullable=True,
-        ),
-    )
-
 
 def downgrade() -> None:
-    # Remove Cloudinary public id
-    op.drop_column(
-        "reports",
-        "cloudinary_public_id",
-    )
-
     # Make file_url NOT NULL again
     op.alter_column(
         "reports",

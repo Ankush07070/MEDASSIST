@@ -11,7 +11,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     answer: str
-    sources: list
+    
 
 
 class ChatHistoryItem(BaseModel):

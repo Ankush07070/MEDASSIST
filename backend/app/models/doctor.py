@@ -17,6 +17,22 @@ class Doctor(TimestampMixin, Base):
         default=uuid.uuid4,
     )
 
+    # ==================================================
+    # LINK TO USER ACCOUNT
+    # ==================================================
+
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
+    # ==================================================
+    # DOCTOR PROFILE
+    # ==================================================
+
     full_name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
@@ -48,17 +64,34 @@ class Doctor(TimestampMixin, Base):
         nullable=False,
     )
 
+    # ==================================================
+    # HOSPITAL
+    # ==================================================
+
     hospital_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("hospitals.id"),
         nullable=False,
+        index=True,
     )
 
-    hospital = relationship(
+    # ==================================================
+    # RELATIONSHIPS
+    # ==================================================
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="doctor_profile",
+        uselist=False,
+    )
+
+    hospital: Mapped["Hospital"] = relationship(
         "Hospital",
         back_populates="doctors",
     )
+
     appointments: Mapped[list["Appointment"]] = relationship(
-    back_populates="doctor",
-    cascade="all, delete-orphan",
-)
+        "Appointment",
+        back_populates="doctor",
+        cascade="all, delete-orphan",
+    )
