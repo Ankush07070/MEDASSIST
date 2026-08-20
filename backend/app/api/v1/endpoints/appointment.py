@@ -81,6 +81,8 @@ def get_doctor_appointments(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
 @router.patch(
     "/{appointment_id}/cancel",
     response_model=AppointmentResponse,
@@ -98,11 +100,17 @@ def cancel_appointment(
             current_user,
         )
 
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.patch(
     "/{appointment_id}/confirm",
@@ -123,6 +131,12 @@ def confirm_appointment(
             appointment_id,
             current_user,
             "confirmed",
+        )
+
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
         )
 
     except ValueError as e:
@@ -153,11 +167,18 @@ def reject_appointment(
             "rejected",
         )
 
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.patch(
     "/{appointment_id}/complete",
@@ -178,6 +199,12 @@ def complete_appointment(
             appointment_id,
             current_user,
             "completed",
+        )
+
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
         )
 
     except ValueError as e:

@@ -109,7 +109,7 @@ class AppointmentService:
         # Only the patient who owns the appointment
         # can cancel it
         if appointment.patient_id != current_user.id:
-            raise ValueError(
+            raise PermissionError(
                 "You cannot cancel this appointment."
             )
 
@@ -174,7 +174,7 @@ class AppointmentService:
 
         # Make sure appointment belongs to this doctor
         if appointment.doctor_id != doctor.id:
-            raise ValueError(
+            raise PermissionError(
                 "You cannot modify this appointment."
             )
 

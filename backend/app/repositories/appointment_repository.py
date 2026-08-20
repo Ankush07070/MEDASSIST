@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.appointment import Appointment
 from app.models.doctor import Doctor
@@ -28,17 +28,32 @@ class AppointmentRepository:
     def get_by_id(
         self,
         appointment_id: UUID,
+        *,
+        for_update: bool = False,
     ) -> Appointment | None:
 
-        return (
+        query = (
             self.db.query(Appointment)
             .options(
-                joinedload(Appointment.doctor).joinedload(Doctor.hospital),
-                joinedload(Appointment.patient)
+                selectinload(Appointment.doctor).selectinload(Doctor.hospital),
+                selectinload(Appointment.patient),
             )
-            .filter(
-                Appointment.id == appointment_id
-            )
+            .filter(Appointment.id == appointment_id)
+        )
+
+        if for_update:
+            query = query.with_for_update()
+
+        return query.first()
+
+    def get_doctor_for_update(
+        self,
+        doctor_id: UUID,
+    ) -> Doctor | None:
+        return (
+            self.db.query(Doctor)
+            .filter(Doctor.id == doctor_id)
+            .with_for_update()
             .first()
         )
 
